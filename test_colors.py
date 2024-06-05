@@ -33,7 +33,15 @@ THEMES = {
     }
 }
 
-COMMANDS = [":d ", ":p ", ":x ", ":q ", ":theme ", ":b ", ":i "]
+COMMANDS = {
+    ":d ": "done, completato",
+    ":p ": "priorità",
+    ":x ": "cancella rigo. 1,3,5 oppure 2-6",
+    ":q ": "quit, chiudi app",
+    ":theme ": "tema può essere 'dark' o 'light'",
+    ":b ": "evidenzia in grassetto una nota",
+    ":i ": "evidenzia in corsivo una nota"
+}
 
 def strikethrough(text):
     return ''.join(c + '\u0336' for c in text)
@@ -193,7 +201,7 @@ class ToDoApp:
                 if f"{todo_id}" in self.bold_notes:
                     attr |= curses.A_BOLD | self.bold_color
                 if f"{todo_id}" in self.italic_notes:
-                    attr |= curses.A_ITALIC | self.italic_color
+                    attr = self.italic_color
                 if f"{todo_id}" in self.highlighted:
                     display_text = strikethrough(todo)
                     self.stdscr.addstr(row_idx, 0, "✔", self.strikethrough_icon_color)
@@ -214,7 +222,7 @@ class ToDoApp:
                         if subtask_key in self.bold_notes:
                             attr |= curses.A_BOLD | self.bold_color
                         if subtask_key in self.italic_notes:
-                            attr |= curses.A_ITALIC | self.italic_color
+                            attr = self.italic_color
                         if subtask_key in self.highlighted:
                             display_text = strikethrough(subtodo)
                             self.stdscr.addstr(row_idx, 4, "✔", self.strikethrough_icon_color)
@@ -233,11 +241,11 @@ class ToDoApp:
             
             # Show suggestions if available
             if suggestions:
-                for idx, suggestion in enumerate(suggestions):
+                for idx, (cmd, desc) in enumerate(suggestions):
                     suggestion_attr = self.text_color
                     if idx == selected_suggestion_index:
                         suggestion_attr |= curses.A_REVERSE
-                    self.stdscr.addstr(height - 3 - idx, 0, suggestion, suggestion_attr)
+                    self.stdscr.addstr(height - 3 - idx, 0, f"{cmd} - {desc}", suggestion_attr)
 
             self.stdscr.clrtoeol()  # Clear the rest of the line
             self.stdscr.refresh()
@@ -402,7 +410,7 @@ class ToDoApp:
 
     def get_suggestions(self, input_str):
         if input_str.startswith(":"):
-            return [cmd for cmd in COMMANDS if cmd.startswith(input_str)]
+            return [(cmd, desc) for cmd, desc in COMMANDS.items() if cmd.startswith(input_str)]
         return []
 
     def log_error(self, message):
@@ -434,7 +442,7 @@ class ToDoApp:
                     selected_suggestion_index = (selected_suggestion_index + 1) % len(suggestions)
             elif key == 10:  # Enter key
                 if selected_suggestion_index is not None and suggestions:
-                    input_str = suggestions[selected_suggestion_index]
+                    input_str = suggestions[selected_suggestion_index][0]
                     suggestions = []
                     selected_suggestion_index = None
                 else:
